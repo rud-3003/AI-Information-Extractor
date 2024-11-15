@@ -96,7 +96,7 @@ streamlit run main.py
 ## Video Demonstration
 For a complete walkthrough and demonstration of how this project works, watch the video below:
 
-[![Watch the video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Watch the video](https://img.youtube.com/vi/9M7a7lVSsfI/maxresdefault.jpg)](https://www.youtube.com/watch?v=9M7a7lVSsfI)
 
 ## License
 This project is licensed under the MIT License.
