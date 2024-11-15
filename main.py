@@ -71,7 +71,6 @@ def perform_search(entity_name, custom_prompt):
     params = {
         "api_key": serp_api_key,
         "q": query,
-        "location": "India",
         "google_domain": "google.com",
         "num": 3,  # Limit to a single result for efficiency
         "output": "json"
@@ -118,7 +117,7 @@ def extract_information_with_groq(entity_name: str, search_snippets: str, user_p
             f"You are a helpful assistant tasked with extracting specific information. "
             f"{full_prompt} using the following search results:\n\n"
             f"{search_snippets}\n\n"
-            "Please provide only the extracted information as a response."
+            "Please provide only the precise extracted information as a response and no other text from your side."
         )
 
         response = client.chat.completions.create(
@@ -149,7 +148,11 @@ def extract_information_with_groq(entity_name: str, search_snippets: str, user_p
 uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 sheet_url = st.text_input("Enter Google Sheet URL")
 
+# Reset session state if a new file is uploaded
 if uploaded_file:
+    if "google_sheet_df" in st.session_state:
+        del st.session_state["google_sheet_df"]  # Remove Google Sheets data if a new file is uploaded
+
     try:
         df = pd.read_csv(uploaded_file)
         st.session_state["csv_df"] = df
@@ -157,7 +160,11 @@ if uploaded_file:
     except Exception as e:
         display_temp_message(f"CSV reading error: {e}", 'error')
 
-if sheet_url:
+# Reset session state if a new Google Sheets URL is provided
+elif sheet_url:
+    if "csv_df" in st.session_state:
+        del st.session_state["csv_df"]  # Remove CSV data if a new Google Sheets link is provided
+
     google_sheet_df = connect_google_sheet(sheet_url)
     if google_sheet_df is not None:
         st.dataframe(google_sheet_df.head())
@@ -175,8 +182,8 @@ if active_df is not None:
         if st.button("Run Extraction"):
             if custom_prompt:
                 entities = active_df[selected_column].dropna().unique()
-                search_results = {}
-                extracted_info = {}
+                search_results = []
+                extracted_info = []
 
                 # Display a temporary status message
                 display_temp_message("Running extraction process...", 'info', duration=1)
@@ -184,20 +191,44 @@ if active_df is not None:
                 # Loop through entities and perform search + extraction
                 for entity in entities:
                     search_result = perform_search(entity, custom_prompt)
+                    
                     if search_result:
                         search_snippet = search_result.get("snippet", "")
-                        search_results[entity] = search_result
-                        extracted_info[entity] = extract_information_with_groq(entity, search_snippet, custom_prompt)
+                    else:
+                        search_snippet = "No relevant information found on web"
+                    
+                    # Append search result
+                    search_results.append({"Entity": entity, "Search Snippet": search_snippet})
+                    
+                    # Perform extraction only if search snippet is available
+                    extracted_text = extract_information_with_groq(entity, search_snippet, custom_prompt) if search_snippet != "No relevant information found on web" else "N/A"
+                    extracted_info.append({"Entity": entity, "Extracted Information": extracted_text})
 
-                # Create a DataFrame to display the results
-                extracted_info_df = pd.DataFrame(extracted_info.items(), columns=["Entity", "Extracted Information"])
+                # Create DataFrames for search results and extracted information
+                search_results_df = pd.DataFrame(search_results)
+                extracted_info_df = pd.DataFrame(extracted_info)
+
+                # Display the search results table
+                st.subheader("Search Results Preview")
+                st.dataframe(search_results_df)
+
+                # Display the extracted information table
+                st.subheader("Extracted Information")
                 st.dataframe(extracted_info_df)
 
-                # Add a download button for the extracted information
+                # Add separate download buttons for search results and extracted information
+                st.download_button(
+                    label="Download Search Results as CSV",
+                    data=search_results_df.to_csv(index=False),
+                    file_name="search_results.csv",
+                    mime="text/csv"
+                )
                 st.download_button(
                     label="Download Extracted Information as CSV",
                     data=extracted_info_df.to_csv(index=False),
                     file_name="extracted_information.csv",
                     mime="text/csv"
                 )
+
+
 
