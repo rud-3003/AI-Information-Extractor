@@ -7,7 +7,7 @@
 4. [Installation & Setup](#installation--setup)
 5. [Environment Variables](#environment-variables)
 6. [How to Run](#how-to-run)
-7. [Code Walkthrough](#code-walkthrough)
+7. [Video Demonstration](#video-demonstration)
 8. [License](#license)
 
 ---
@@ -93,6 +93,7 @@ Copy code
 streamlit run main.py
 ```
 
+## Video Demonstration
 For a complete walkthrough and demonstration of how this project works, watch the video below:
 
 [![Watch the video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
